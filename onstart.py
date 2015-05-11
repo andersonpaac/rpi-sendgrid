@@ -5,6 +5,7 @@ import datetime
 import socket
 import fcntl
 import struct
+import subprocess as sub
 
 receiver = "andersonpaac@gmail.com"
 sender = receiver
@@ -16,18 +17,20 @@ def sendmail(args):
 	else:
 		key = args.key
 		sender,receiver = args.email
-	sgclient = sg = sendgrid.SendGridClient('key')
-	cont = contentstosend("en0")
+	sgclient = sendgrid.SendGridClient(key)
+	cont = contentstosend()
 	sbj = "RPi Update: "+str(datetime.datetime.now())
 	print cont
 	#message = sendgrid.Mail(to=reciever, subject=sbj,, text=cont, from_email='sender')
 
-def contentstosend(interface):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    return socket.inet_ntoa(fcntl.ioctl(
-        s.fileno(),0x8915,struct.pack('256s', interface[:15]))[20:24])
-	
-
+def contentstosend():
+    p = sub.Popen('ifconfig',stdout=sub.PIPE,stderr=sub.PIPE)
+    output, errors = p.communicate()
+    ip = output[393:414]
+    p = sub.Popen('iwconfig',stdout=sub.PIPE,stderr=sub.PIPE)
+    output, errors = p.communicate()
+    essid = output[0:45]
+    return ip+" "+essid
 
 def main():
 	parser = arg.args()
